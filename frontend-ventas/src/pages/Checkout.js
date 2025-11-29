@@ -11,6 +11,7 @@ const Checkout = ({ user, carrito, vaciarCarrito, calcularTotal }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [ventaId, setVentaId] = useState(null);
+  const [totalPagado, setTotalPagado] = useState(0);
 
   const total = calcularTotal(moneda);
   const simbolo = moneda === 'PEN' ? 'S/' : '$';
@@ -77,6 +78,9 @@ const Checkout = ({ user, carrito, vaciarCarrito, calcularTotal }) => {
     setLoading(true);
 
     try {
+      const totalActual = calcularTotal(moneda);
+      setTotalPagado(totalActual);
+
       const clienteResponse = await guardarCliente(clienteData);
       
       if (!clienteResponse.success) {
@@ -103,7 +107,7 @@ const Checkout = ({ user, carrito, vaciarCarrito, calcularTotal }) => {
       if (ventaResponse.success) {
         setVentaId(ventaResponse.data.id);
         setPaso(3);
-        vaciarCarrito();
+        vaciarCarrito(); 
       } else {
         setError('Error al procesar la venta');
       }
@@ -148,8 +152,9 @@ const Checkout = ({ user, carrito, vaciarCarrito, calcularTotal }) => {
           <p>Tu {tipoComprobante.toLowerCase()} ha sido generada correctamente</p>
           
           <div className="exito-info">
-            <p><strong>Total pagado:</strong> {simbolo} {total.toFixed(2)}</p>
+            <p><strong>Total pagado:</strong> {simbolo} {totalPagado.toFixed(2)}</p>
             <p><strong>ID de venta:</strong> #{ventaId}</p>
+            <p><strong>Tipo de comprobante:</strong> {tipoComprobante}</p>
           </div>
 
           <div className="exito-acciones">

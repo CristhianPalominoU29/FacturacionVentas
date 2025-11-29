@@ -21,7 +21,6 @@ const Home = ({ onAgregarCarrito, user }) => {
       setError('');
       const response = await getProductos();
 
-      // Ahora el backend devuelve directamente el array
       if (Array.isArray(response)) {
         setProductos(response);
       } else if (response?.data) {
@@ -41,7 +40,7 @@ const Home = ({ onAgregarCarrito, user }) => {
 
   const productosFiltrados = productos.filter(producto => {
     const matchBusqueda = producto.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-                         producto.descripcion?.toLowerCase().includes(busqueda.toLowerCase());
+      producto.descripcion?.toLowerCase().includes(busqueda.toLowerCase());
     const matchCategoria = categoriaFiltro === 'todas' || producto.categoria === categoriaFiltro;
     return matchBusqueda && matchCategoria;
   });

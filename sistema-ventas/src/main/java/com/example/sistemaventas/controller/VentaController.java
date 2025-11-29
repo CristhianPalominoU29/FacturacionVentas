@@ -17,7 +17,6 @@ import com.example.sistemaventas.dto.ApiResponse;
 import com.example.sistemaventas.dto.VentaRequest;
 import com.example.sistemaventas.dto.VentaResponse;
 import com.example.sistemaventas.model.Venta;
-import com.example.sistemaventas.service.PdfService;
 import com.example.sistemaventas.service.VentaService;
 
 import jakarta.validation.Valid;
@@ -30,20 +29,14 @@ import lombok.RequiredArgsConstructor;
 public class VentaController {
 
     private final VentaService ventaService;
-    private final PdfService pdfService;
 
     // Crear nueva venta
     @PostMapping
-    public ResponseEntity<ApiResponse<VentaResponse>> crear(@Valid @RequestBody VentaRequest request) {
+    public ResponseEntity<ApiResponse<VentaResponse>> crear(
+            @Valid @RequestBody VentaRequest request) {
         try {
             Venta venta = ventaService.crearVenta(request);
-
-            // GENERAR Y GUARDAR PDF + DEVOLVER RUTA
-            String rutaPdf = pdfService.generarYGuardarComprobantePdf(venta.getId());
-
             VentaResponse response = convertirAVentaResponse(venta);
-            response.setRutaPdf(rutaPdf);  // ← Ahora sí funciona
-
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Venta creada exitosamente", response));
         } catch (RuntimeException e) {
@@ -116,7 +109,6 @@ public class VentaController {
         response.setIgv(venta.getIgv());
         response.setTotal(venta.getTotal());
         response.setFechaVenta(venta.getFechaVenta());
-        response.setRutaPdf(venta.getRutaPdf());
 
         // Cliente info
         VentaResponse.ClienteInfo clienteInfo = new VentaResponse.ClienteInfo();
@@ -126,21 +118,21 @@ public class VentaController {
 
         String nombreCompleto = venta.getCliente().getTipoDocumento().equals("RUC")
                 ? venta.getCliente().getRazonSocial()
-                : venta.getCliente().getNombres() + " "
-                + venta.getCliente().getApellidoPaterno() + " "
-                + venta.getCliente().getApellidoMaterno();
+                : venta.getCliente().getNombres() + " " +
+                  venta.getCliente().getApellidoPaterno() + " " +
+                  venta.getCliente().getApellidoMaterno();
         clienteInfo.setNombreCompleto(nombreCompleto);
         response.setCliente(clienteInfo);
 
         // Detalles
         List<VentaResponse.DetalleInfo> detalles = venta.getDetalles().stream()
-                .map(d -> {
-                    VentaResponse.DetalleInfo info = new VentaResponse.DetalleInfo();
-                    info.setProductoNombre(d.getProducto().getNombre());
-                    info.setCantidad(d.getCantidad());
-                    info.setPrecioUnitario(d.getPrecioUnitario());
-                    info.setSubtotal(d.getSubtotal());
-                    return info;
+                .map(detalle -> {
+                    VentaResponse.DetalleInfo detalleInfo = new VentaResponse.DetalleInfo();
+                    detalleInfo.setProductoNombre(detalle.getProducto().getNombre());
+                    detalleInfo.setCantidad(detalle.getCantidad());
+                    detalleInfo.setPrecioUnitario(detalle.getPrecioUnitario());
+                    detalleInfo.setSubtotal(detalle.getSubtotal());
+                    return detalleInfo;
                 })
                 .collect(Collectors.toList());
         response.setDetalles(detalles);

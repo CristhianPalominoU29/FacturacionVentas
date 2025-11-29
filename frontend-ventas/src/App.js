@@ -97,7 +97,7 @@ function App() {
       </main>
 
       <footer className="footer">
-        <p>© 2024 Mi Tienda - Sistema de Ventas con Comprobantes Electrónicos</p>
+        <p>© 2025 Mi Tienda - Sistema de Ventas con Comprobantes Electrónicos</p>
       </footer>
     </div>
   );

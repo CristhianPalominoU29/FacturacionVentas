@@ -49,7 +49,7 @@ public class ClienteService {
     }
 
     // Consultar DNI desde API externa CON TOKEN
-    // Consultar RUC desde DECOLECTA (tu API real)
+    // Consultar RUC desde DECOLECTA
     public Map<String, Object> consultarRUC(String ruc) {
         try {
             String url = "https://api.decolecta.com/v1/sunat/ruc?numero=" + ruc;

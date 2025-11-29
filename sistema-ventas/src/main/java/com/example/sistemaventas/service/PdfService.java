@@ -1,10 +1,7 @@
 package com.example.sistemaventas.service;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.example.sistemaventas.model.Venta;
@@ -19,36 +16,33 @@ public class PdfService {
     private final VentaService ventaService;
     private final PdfGenerator pdfGenerator;
 
-    @Value("${app.pdf.directory:src/main/resources/static/pdfs}")
-    private String pdfDirectory;
-
-    // 1. GUARDA EN DISCO + DEVUELVE RUTA (usado al crear venta)
-    public String generarYGuardarComprobantePdf(Long ventaId) {
-        Venta venta = ventaService.obtenerVentaPorId(ventaId);
-        ByteArrayOutputStream baos = pdfGenerator.generarComprobante(venta);
-
-        File dir = new File(pdfDirectory);
-        if (!dir.exists()) dir.mkdirs();
-
-        String fileName = "comprobante-" + ventaId + ".pdf";
-        String filePath = pdfDirectory + File.separator + fileName;
-
-        try (FileOutputStream fos = new FileOutputStream(filePath)) {
-            baos.writeTo(fos);
-        } catch (Exception e) {
-            throw new RuntimeException("Error al guardar PDF", e);
-        }
-
-        String rutaPublica = "/pdfs/" + fileName;
-        ventaService.marcarPdfGenerado(ventaId, rutaPublica);
-
-        return rutaPublica;
-    }
-
-    // 2. SOLO GENERA EN MEMORIA (usado por PdfController para vista previa)
     public byte[] generarComprobantePdf(Long ventaId) {
-        Venta venta = ventaService.obtenerVentaPorId(ventaId);
-        ByteArrayOutputStream baos = pdfGenerator.generarComprobante(venta);
-        return baos.toByteArray();
+        try {
+            System.out.println("=== GENERANDO PDF PARA VENTA: " + ventaId + " ===");
+            
+            Venta venta = ventaService.obtenerVentaPorId(ventaId);
+            System.out.println("Venta encontrada: " + venta.getNumeroComprobante());
+            System.out.println("Tipo: " + venta.getTipoComprobante());
+            System.out.println("Total: " + venta.getTotal());
+            System.out.println("Cantidad de detalles: " + venta.getDetalles().size());
+            
+            ByteArrayOutputStream outputStream = pdfGenerator.generarComprobante(venta);
+            byte[] pdfBytes = outputStream.toByteArray();
+            
+            System.out.println("PDF generado correctamente. Tamaño: " + pdfBytes.length + " bytes");
+            
+            // Marcar como generado
+            String rutaPdf = "comprobantes/" + venta.getNumeroComprobante() + ".pdf";
+            ventaService.marcarPdfGenerado(ventaId, rutaPdf);
+            
+            return pdfBytes;
+            
+        } catch (Exception e) {
+            System.err.println("=== ERROR AL GENERAR PDF ===");
+            System.err.println("Tipo de error: " + e.getClass().getName());
+            System.err.println("Mensaje: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Error al generar PDF: " + e.getMessage(), e);
+        }
     }
 }

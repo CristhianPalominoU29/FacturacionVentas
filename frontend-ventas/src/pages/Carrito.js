@@ -26,7 +26,7 @@ const Carrito = ({ carrito, onActualizarCantidad, onEliminar, onVaciar, calcular
     return (
       <div className="carrito-vacio">
         <div className="carrito-vacio-content">
-          <h2>🛒 Tu carrito está vacío</h2>
+          <h2>Tu carrito está vacío</h2>
           <p>Agrega productos para comenzar tu compra</p>
           <a href="#home" className="btn-volver">
             Ver productos

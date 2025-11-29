@@ -23,7 +23,6 @@ import com.itextpdf.layout.properties.UnitValue;
 public class PdfGenerator {
 
     private static final DeviceRgb HEADER_COLOR = new DeviceRgb(41, 128, 185);
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
     public ByteArrayOutputStream generarComprobante(Venta venta) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -38,54 +37,63 @@ public class PdfGenerator {
             NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(locale);
 
             // ============ TÍTULO ============
-            document.add(new Paragraph(venta.getTipoComprobante())
+            Paragraph titulo = new Paragraph(venta.getTipoComprobante())
                     .setFontSize(24)
                     .setBold()
                     .setTextAlignment(TextAlignment.CENTER)
-                    .setFontColor(HEADER_COLOR));
+                    .setFontColor(HEADER_COLOR);
+            document.add(titulo);
 
-            document.add(new Paragraph("N° " + venta.getNumeroComprobante())
+            Paragraph numeroComprobante = new Paragraph("N° " + venta.getNumeroComprobante())
                     .setFontSize(14)
                     .setBold()
-                    .setTextAlignment(TextAlignment.CENTER));
+                    .setTextAlignment(TextAlignment.CENTER);
+            document.add(numeroComprobante);
 
             document.add(new Paragraph("\n"));
 
             // ============ DATOS DEL EMISOR ============
             document.add(new Paragraph("DATOS DEL EMISOR")
-                    .setBold().setFontSize(12).setFontColor(HEADER_COLOR));
-            document.add(new Paragraph("Razón Social: MI EMPRESA S.A.C.").setFontSize(10));
-            document.add(new Paragraph("RUC: 20123456789").setFontSize(10));
-            document.add(new Paragraph("Dirección: Av. Principal 123, Lima, Perú").setFontSize(10));
-            document.add(new Paragraph("Teléfono: (01) 123-4567").setFontSize(10));
-            document.add(new Paragraph("\n"));
+                    .setBold()
+                    .setFontSize(12)
+                    .setFontColor(HEADER_COLOR));
 
-            // ============ DATOS DEL CLIENTE ============
+            document.add(new Paragraph("Razón Social: Sistema de Ventas S.A.C.").setFontSize(10));
+            document.add(new Paragraph("RUC: 12345678910").setFontSize(10));
+            document.add(new Paragraph("Dirección: Universidad Tecnogolica del Perú").setFontSize(10));
+            document.add(new Paragraph("Teléfono: 987654321").setFontSize(10));
+            document.add(new Paragraph("\n"));
+            
+            //============ DATOS DEL CLIENTE ============
             document.add(new Paragraph("DATOS DEL CLIENTE")
-                    .setBold().setFontSize(12).setFontColor(HEADER_COLOR));
+                    .setBold()
+                    .setFontSize(12)
+                    .setFontColor(HEADER_COLOR));
 
             String tipoDoc = venta.getCliente().getTipoDocumento();
             String numeroDoc = venta.getCliente().getNumeroDocumento();
             String nombreCliente;
 
-            if ("RUC".equals(tipoDoc)) {
+            if (tipoDoc.equals("RUC")) {
                 nombreCliente = venta.getCliente().getRazonSocial();
                 document.add(new Paragraph("RUC: " + numeroDoc).setFontSize(10));
                 document.add(new Paragraph("Razón Social: " + nombreCliente).setFontSize(10));
             } else {
-                nombreCliente = venta.getCliente().getNombres() + " " +
-                        venta.getCliente().getApellidoPaterno() + " " +
-                        (venta.getCliente().getApellidoMaterno() != null ? venta.getCliente().getApellidoMaterno() : "");
+                nombreCliente = venta.getCliente().getNombres() + " "
+                        + venta.getCliente().getApellidoPaterno() + " "
+                        + venta.getCliente().getApellidoMaterno();
                 document.add(new Paragraph("DNI: " + numeroDoc).setFontSize(10));
-                document.add(new Paragraph("Cliente: " + nombreCliente.trim()).setFontSize(10));
+                document.add(new Paragraph("Cliente: " + nombreCliente).setFontSize(10));
             }
 
-            if (venta.getCliente().getDireccion() != null && !venta.getCliente().getDireccion().isBlank()) {
+            if (venta.getCliente().getDireccion() != null && !venta.getCliente().getDireccion().isEmpty()) {
                 document.add(new Paragraph("Dirección: " + venta.getCliente().getDireccion()).setFontSize(10));
             }
 
-            // ============ FECHA Y MONEDA (ESTO ARREGLA EL ERROR "HourOfDay") ============
-            String fechaFormateada = venta.getFechaVenta().format(DATE_FORMATTER);
+            // Fecha y moneda - CORREGIDO
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            String fechaFormateada = venta.getFechaVenta().format(formatter);
+
             document.add(new Paragraph("Fecha: " + fechaFormateada).setFontSize(10));
             document.add(new Paragraph("Moneda: " + (venta.getMoneda().equals("PEN") ? "Soles (S/)" : "Dólares ($)")).setFontSize(10));
             document.add(new Paragraph("\n"));
@@ -94,6 +102,7 @@ public class PdfGenerator {
             Table tablaProductos = new Table(UnitValue.createPercentArray(new float[]{1, 4, 2, 2, 2}));
             tablaProductos.setWidth(UnitValue.createPercentValue(100));
 
+            // Encabezados
             tablaProductos.addHeaderCell(new Paragraph("CANT.").setBold().setFontSize(10)
                     .setBackgroundColor(HEADER_COLOR).setFontColor(ColorConstants.WHITE));
             tablaProductos.addHeaderCell(new Paragraph("DESCRIPCIÓN").setBold().setFontSize(10)
@@ -105,10 +114,12 @@ public class PdfGenerator {
             tablaProductos.addHeaderCell(new Paragraph("TOTAL").setBold().setFontSize(10)
                     .setBackgroundColor(HEADER_COLOR).setFontColor(ColorConstants.WHITE));
 
+            // Filas de productos
             for (DetalleVenta detalle : venta.getDetalles()) {
                 tablaProductos.addCell(new Paragraph(String.valueOf(detalle.getCantidad()))
                         .setFontSize(9).setTextAlignment(TextAlignment.CENTER));
-                tablaProductos.addCell(new Paragraph(detalle.getProducto().getNombre()).setFontSize(9));
+                tablaProductos.addCell(new Paragraph(detalle.getProducto().getNombre())
+                        .setFontSize(9));
                 tablaProductos.addCell(new Paragraph(currencyFormat.format(detalle.getPrecioUnitario()))
                         .setFontSize(9).setTextAlignment(TextAlignment.RIGHT));
                 tablaProductos.addCell(new Paragraph(currencyFormat.format(detalle.getSubtotal()))
@@ -124,31 +135,42 @@ public class PdfGenerator {
             Table tablaTotales = new Table(UnitValue.createPercentArray(new float[]{3, 1}));
             tablaTotales.setWidth(UnitValue.createPercentValue(100));
 
-            tablaTotales.addCell(new Paragraph("SUBTOTAL:").setBold().setFontSize(11).setTextAlignment(TextAlignment.RIGHT));
-            tablaTotales.addCell(new Paragraph(currencyFormat.format(venta.getSubtotal())).setFontSize(11).setTextAlignment(TextAlignment.RIGHT));
+            tablaTotales.addCell(new Paragraph("SUBTOTAL:").setBold()
+                    .setFontSize(11).setTextAlignment(TextAlignment.RIGHT));
+            tablaTotales.addCell(new Paragraph(currencyFormat.format(venta.getSubtotal()))
+                    .setFontSize(11).setTextAlignment(TextAlignment.RIGHT));
 
-            tablaTotales.addCell(new Paragraph("IGV (18%):").setBold().setFontSize(11).setTextAlignment(TextAlignment.RIGHT));
-            tablaTotales.addCell(new Paragraph(currencyFormat.format(venta.getIgv())).setFontSize(11).setTextAlignment(TextAlignment.RIGHT));
+            tablaTotales.addCell(new Paragraph("IGV (18%):").setBold()
+                    .setFontSize(11).setTextAlignment(TextAlignment.RIGHT));
+            tablaTotales.addCell(new Paragraph(currencyFormat.format(venta.getIgv()))
+                    .setFontSize(11).setTextAlignment(TextAlignment.RIGHT));
 
-            tablaTotales.addCell(new Paragraph("TOTAL:").setBold().setFontSize(14)
+            tablaTotales.addCell(new Paragraph("TOTAL:").setBold()
+                    .setFontSize(14)
                     .setTextAlignment(TextAlignment.RIGHT)
-                    .setBackgroundColor(HEADER_COLOR).setFontColor(ColorConstants.WHITE));
-            tablaTotales.addCell(new Paragraph(currencyFormat.format(venta.getTotal())).setBold().setFontSize(14)
+                    .setBackgroundColor(HEADER_COLOR)
+                    .setFontColor(ColorConstants.WHITE));
+            tablaTotales.addCell(new Paragraph(currencyFormat.format(venta.getTotal()))
+                    .setBold()
+                    .setFontSize(14)
                     .setTextAlignment(TextAlignment.RIGHT)
-                    .setBackgroundColor(HEADER_COLOR).setFontColor(ColorConstants.WHITE));
+                    .setBackgroundColor(HEADER_COLOR)
+                    .setFontColor(ColorConstants.WHITE));
 
             document.add(tablaTotales);
 
             // ============ PIE DE PÁGINA ============
             document.add(new Paragraph("\n\n"));
-            document.add(new Paragraph("Gracias por su compra")
+            Paragraph footer = new Paragraph("Gracias por su compra")
                     .setTextAlignment(TextAlignment.CENTER)
                     .setFontSize(10)
-                    .setItalic());
+                    .setItalic();
+            document.add(footer);
 
             document.close();
 
         } catch (Exception e) {
+            System.err.println("Error al generar PDF: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("Error al generar el PDF: " + e.getMessage(), e);
         }
